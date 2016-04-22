@@ -20,4 +20,5 @@
 ### Install TORCS 
 
 Copy the 3001.xml config to a directory of your choice
+<br>
 Open MatlabExample.m and point TorcsConfigBase  to your chosen config Directory
