@@ -1,14 +1,14 @@
 ## Installation
-# Fetch sources
+### Fetch sources
 ```
   git clone https://github.com/madmax2012/torcs-matlab.git
   cd torcs-matlab
 ```
-# Install dependencies
+### Install dependencies
 ```
   sudo apt-get install -y mesa-common-dev freeglut3-dev libplib-dev libalut-dev vorbis-tools libvorbis-dev libxi6 libxi-dev libxmu-dev libxrender-dev libxrandr2 zlib1g-dev libpng3 libpng++-dev openssh-server libxrandr-dev
 ```
-# Install TORCS 
+### Install TORCS 
 
 ```  
   ./configure
