@@ -16,3 +16,8 @@
   sudo make install
   make datainstall
 ```
+
+### Install TORCS 
+
+Copy the 3001.xml config to a directory of your choice
+Open MatlabExample.m and point TorcsConfigBase  to your chosen config Directory
