@@ -1,14 +1,17 @@
+clear;clc;
+
+%% Please change this path!
+TorcsConfigBase = '/home/alex/torcs-matlab/configs/'; % just insert your config path here
+
 %% Initialization
-clear;
-clc;
-killTorcs = 'killall torcs ';
-killBin = 'killall torcs-bin ';
-TorcsConfigBase = '~/Documents/MATLAB/torcs/configs/'; % just insert your config path here
-gui=0;
-debug =0;
-steps=60;
-data={zeros(1,steps)};
-%% start server
+killTorcs       = 'killall torcs ';
+killBin         = 'killall torcs-bin ';
+gui             = 0;                        % TORCS gui
+debug           = 0;                        % DEBUG mode
+steps           = 100;                      % Max. simulation time steps (!!)
+data            = zeros(33,steps);          % Will contain all sensor data
+
+%% Start the Torcs server
 system(killTorcs);
 system(killBin);
 if gui == 1
@@ -22,18 +25,26 @@ else
     pause(.2);  % wait for the server to come up
     disp('server started')
 end
-%% startclient
 
-i=0;
+%% Start the visualization
+figure(1);
+title('Current performance');
+drawnow;
+
+%% Start the client
 c = udp('127.0.0.1', 3001);
 fopen(c);
 fwrite(c,'SCR(init 90 45 0 -45 -90)');
-while ( i<=steps)
-    i = i + 1;
+for i=1:steps
+    % The following line contains the command string that is sent to the
+    % TORCS server. Ignore the focus for now and concentrate on training a
+    % controller that handles acceleration, braking, gear changes, steering
+    % and the clutch.
     fwrite(c,'(accel 0.5)(brake 0) )(gear 1)(steer 0)(clutch 0)(focus -90 -45 0 45 90)');
-    data{i} = fscanf(c);
+    dat = fscanf(c);
     if i >  1
-        s = sscanf(data{i},'(angle %f)(curLapTime %f)(damage %f)(distFromStart %f)(distRaced %f)(fuel %f)(gear %f)(lastLapTime %f)(racePos %f)(rpm %f)(speedX %f)(speedY %f)(speedZ %f)(track %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f)(trackPos %f)');
+        % Read the sensor and other data from the UDP port
+        s = sscanf(dat,'(angle %f)(curLapTime %f)(damage %f)(distFromStart %f)(distRaced %f)(fuel %f)(gear %f)(lastLapTime %f)(racePos %f)(rpm %f)(speedX %f)(speedY %f)(speedZ %f)(track %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f)(trackPos %f)');
         sizeS = (size(s));
         if(sizeS(1) == 33)
             angle=(s(1)+pi);
@@ -51,11 +62,22 @@ while ( i<=steps)
             speedZ=(s(13)+20);
             trackSensors=s(14:32);
             trackPos=(s(33)+1);
+            
+            % Save the data 
+            data(:,i) = s;
+            % Text display
+            disp(dat)
+            % Plot the data (Please label the plot yourself)
+            plot(data');
+            % Make sure to force drawing, otherwise the plot will only
+            % update after the run. If you are using the TORCS gui, the
+            % plot is not synchronized to the run.
+            %
+            % You might also want to get rid of the empty data columns
+            drawnow;
         else
             disp('readError');
         end
     end
-    disp(fscanf(c))
 end
-
 
