@@ -91,10 +91,7 @@ for i=1:steps
                 %'Gear', 'Last Lap Time', 'Race Position', 'RPM', 'Speed X', 'Speed Y', 'Speed Z', 'Track Sensors', 'Track Position');
                 
                 % Make sure to force drawing, otherwise the plot will only
-                % update after the run. If you are using the TORCS gui, the
-                % plot is not synchronized to the run.
-                %
-                % You might also want to get rid of the empty data columns
+                % update after the run.
                 drawnow;
             end
         else
