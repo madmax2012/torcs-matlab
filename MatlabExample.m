@@ -7,29 +7,30 @@ TorcsConfigBase = '/home/alex/torcs-matlab/configs/'; % just insert your config 
 killTorcs       = 'killall torcs ';
 killBin         = 'killall torcs-bin ';
 gui             = 1;                        % TORCS gui
-runstats        = 1;                        % RUN statistics
-statframe       = 10;                        % Show run statistics every n frame
+runstats        = 0;                        % RUN statistics
+statframe       = 1;                        % Show run statistics every n frame
 debug           = 0;                        % DEBUG mode
-steps           = 1000;                      % Max. simulation time steps (!!)
+steps           = 100000;                      % Max. simulation time steps (!!)
 data            = zeros(33,1);          % Will contain all sensor data
+
+timeout         = 1000000;
 
 %% Start the Torcs server
 system(killTorcs);
 system(killBin);
 if gui == 1
-    startServer = 'torcs &';
+    %startServer = 'torcs &';
+    startServer = ['torcs -t ' timeout ' ' TorcsConfigBase '3001.xml &'];
+    disp(startServer)
     system(startServer);
     pause(12);
 else
-    startServer = ['torcs -t 1000000 -r ' TorcsConfigBase '3001.xml &'];
+    startServer = ['torcs -t ' timeout ' -r ' TorcsConfigBase '3001.xml &'];
     disp(startServer)
     system(startServer);
     pause(.2);  % wait for the server to come up
     disp('server started')
 end
-
-%% Start the visualization
-figure(1);
 
 %% Start the client
 c = udp('127.0.0.1', 3001);
@@ -40,35 +41,29 @@ for i=1:steps
     % TORCS server. Ignore the focus for now and concentrate on training a
     % controller that handles acceleration, braking, gear changes, steering
     % and the clutch.
-    fwrite(c,'(accel 0.5)(brake 0) )(gear 1)(steer 0)(clutch 0)(focus -90 -45 0 45 90)');
+    if i < 500
+        fwrite(c,'(accel 1.0)(brake 0) )(gear 3)(steer 0)(clutch 0)(focus -90 -45 0 45 90)');
+    else
+        fwrite(c,'(accel 0.0)(brake 1.0) )(gear 3)(steer 1.0)(clutch 0)(focus -90 -45 0 45 90)');
+    end
     dat = fscanf(c);
     if i >  1
         % Read the sensor and other data from the UDP port
         s = sscanf(dat,'(angle %f)(curLapTime %f)(damage %f)(distFromStart %f)(distRaced %f)(fuel %f)(gear %f)(lastLapTime %f)(racePos %f)(rpm %f)(speedX %f)(speedY %f)(speedZ %f)(track %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f)(trackPos %f)');
         sizeS = (size(s));
-        if(sizeS(1) == 33 && mod(i,10) == 0)
-            angle=(s(1)+pi);
-            curLapTime=s(2);
-            damage=s(3);
-            distFromStart=s(4);
-            distRaced=s(5);
-            fuel=s(6);
-            gear=(s(7)+1);
-            lastLapTime=s(8);
-            racePos=s(9);
-            rpm=s(10);
-            speedX=(s(11)+30);
-            speedY=(s(12)+20);
-            speedZ=(s(13)+20);
-            trackSensors=s(14:32);
-            trackPos=(s(33)+1);
+        if(sizeS(1) == 33)
+            angle=(s(1)+pi);curLapTime=s(2);damage=s(3);distFromStart=s(4);distRaced=s(5);fuel=s(6);gear=(s(7)+1);
+            lastLapTime=s(8);racePos=s(9);rpm=s(10);speedX=(s(11)+30);speedY=(s(12)+20);speedZ=(s(13)+20);
+            trackSensors=s(14:32);trackPos=(s(33)+1);
             
             % Save the data
             data(:,end+1) = s;
             % Text display
             %disp(dat)
+            disp(size(data));
             % Plot the data (Please label the plot yourself)
             if runstats == 1 && mod(i,statframe) == 0
+                figure(1);
                 subplot(2,2,1);
                 plot(data([2,4,5,8],:)');
                 legend('Current Lap Time', 'Dist. from Start', 'Dist. Raced', 'Last Lap Time', 'Location', 'NorthEast');
@@ -97,6 +92,7 @@ for i=1:steps
         else
             %disp('readError (which you can probably ignore)');
         end
+        %pause(timeout/1000000000);
     end
 end
 
